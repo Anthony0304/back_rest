@@ -1,6 +1,7 @@
 // models/Restaurante.js
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../db/conexion.js';
+import Menu from './Menu.js';
 
 const Restaurante = sequelize.define('Restaurante', {
   id: {
@@ -25,6 +26,12 @@ const Restaurante = sequelize.define('Restaurante', {
   descripcion: {
     type: DataTypes.TEXT,
   },
+  horario_apertura: {
+    type: DataTypes.TIME,
+  },
+  horario_cierre: {
+    type: DataTypes.TIME,
+  },
   fecha_creacion: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
@@ -33,5 +40,8 @@ const Restaurante = sequelize.define('Restaurante', {
   tableName: 'restaurantes',
   timestamps: false,
 });
+
+Restaurante.hasMany(Menu, { as: 'menus', foreignKey: 'id_restaurante' });
+Menu.belongsTo(Restaurante, { foreignKey: 'id_restaurante' });
 
 export default Restaurante;

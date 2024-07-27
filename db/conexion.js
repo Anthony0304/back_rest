@@ -1,6 +1,6 @@
 // db/conexion.js
 import { Sequelize } from 'sequelize';
-import { DB_CONNECTION, DB_USERNAME, DB_PASSWORD, DB_HOST, DB_DATABASE } from '../config/config.js';
+import { DB_CONNECTION, DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_DATABASE } from '../config/config.js';
 
 export const sequelize = new Sequelize(
   DB_DATABASE,
@@ -8,6 +8,7 @@ export const sequelize = new Sequelize(
   DB_PASSWORD,
   {
     host: DB_HOST,
+    port: DB_PORT,
     dialect: DB_CONNECTION,
     logging: false, // Opcional: desactiva el registro de consultas SQL en la consola
   }

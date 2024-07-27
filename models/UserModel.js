@@ -1,13 +1,12 @@
 // models/UserModel.js
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../db/conexion.js';
-import TypeUsersModel from './TypeUsersModel.js';
 
 const UserModel = sequelize.define('UserModel', {
   id: {
     type: DataTypes.INTEGER,
-    primaryKey: true,
     autoIncrement: true,
+    primaryKey: true,
   },
   user: {
     type: DataTypes.STRING,

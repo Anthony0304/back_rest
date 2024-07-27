@@ -1,13 +1,17 @@
 // index.js
 import express from 'express';
 import { sequelize } from './db/conexion.js';
-import { RouterUser } from './router/UserRouter.js';
+import UserRouter from './router/UserRouter.js';
+import RestauranteRouter from './router/RestauranteRouter.js';
+import ReservaRouter from './router/ReservaRouter.js';
 import { PORT } from './config/config.js';
 
 const app = express();
 
 app.use(express.json());
-app.use('/api', RouterUser);
+app.use('/api', UserRouter);
+app.use('/api', RestauranteRouter);
+app.use('/api', ReservaRouter);
 
 sequelize.sync()
   .then(() => {

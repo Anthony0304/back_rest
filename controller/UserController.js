@@ -1,5 +1,8 @@
 // controller/UserController.js
 import UserModel from '../models/UserModel.js';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { TOKEN_KEY } from '../config/config.js';
 
 // Ejemplo de funciones
 export const getUsers = async (req, res) => {
@@ -26,7 +29,9 @@ export const getOneUser = async (req, res) => {
 
 export const createUsers = async (req, res) => {
   try {
-    const user = await UserModel.create(req.body);
+    // Encriptar la contraseña antes de guardar el usuario
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const user = await UserModel.create({ ...req.body, password: hashedPassword });
     res.status(201).json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -62,7 +67,29 @@ export const deleteUsers = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  // Implementa la lógica de inicio de sesión
+  const { email, password } = req.body;
+
+  try {
+    const user = await UserModel.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email }, TOKEN_KEY, {
+      expiresIn: '2h',
+    });
+
+    res.json({ token });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
 
 export const updateUsersEmail = async (req, res) => {
