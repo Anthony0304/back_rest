@@ -1,4 +1,3 @@
-// models/UserModel.js
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../db/conexion.js';
 
@@ -19,6 +18,7 @@ const UserModel = sequelize.define('UserModel', {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
   },
   state: {
     type: DataTypes.BOOLEAN,

@@ -1,13 +1,16 @@
 import Reserva from '../models/Reserva.js';
 import nodemailer from 'nodemailer';
+import { EMAIL_USER, EMAIL_PASS } from '../config/config.js';
 import UserModel from '../models/UserModel.js';
 
 // Configurar nodemailer para enviar correos
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.EMAIL_HOST,
+  port: 465,
+  secure: true,
   auth: {
-    user: 'tu_correo@gmail.com',  // Reemplaza con tu correo real
-    pass: 'tu_contraseña'  // Reemplaza con tu contraseña real
+    user: EMAIL_USER,
+    pass: EMAIL_PASS
   }
 });
 
@@ -21,10 +24,9 @@ export const getAllReservas = async (req, res) => {
 };
 
 export const createReserva = async (req, res) => {
-  const { id_usuario, id_restaurante, fecha_reserva, hora_reserva, numero_personas } = req.body;
-  
+  const { id_usuario, id_restaurante, fecha_reserva, hora_reserva, numero_personas, email } = req.body;
+
   try {
-    // Verificar la disponibilidad de la reserva
     const reservasExistentes = await Reserva.findAll({
       where: {
         id_restaurante,
@@ -37,27 +39,26 @@ export const createReserva = async (req, res) => {
       return res.status(400).json({ error: 'No hay disponibilidad para esta fecha y hora' });
     }
 
-    // Crear la reserva
     const reserva = await Reserva.create({ id_usuario, id_restaurante, fecha_reserva, hora_reserva, numero_personas });
-    
-    // Enviar confirmación por correo electrónico
+
     const user = await UserModel.findByPk(id_usuario);
     const mailOptions = {
-      from: 'tu_correo@gmail.com',  // Reemplaza con tu correo real
-      to: user.email,
+      from: EMAIL_USER,
+      to: email,
       subject: 'Confirmación de Reserva',
       text: `Tu reserva ha sido confirmada para el ${fecha_reserva} a las ${hora_reserva}.`
     };
-    
+
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.log(error);
+        console.log('Error al enviar el correo:', error);
+        return res.status(500).json({ error: 'Error al enviar el correo de confirmación', details: error.message });
       } else {
-        console.log('Correo enviado: ' + info.response);
+        console.log('Correo enviado:', info.response);
+        res.status(201).json({ reserva, mensaje: 'Reserva creada y correo de confirmación enviado' });
       }
     });
 
-    res.status(201).json(reserva);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

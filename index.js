@@ -1,4 +1,7 @@
 // index.js
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import { sequelize } from './db/conexion.js';
 import UserRouter from './router/UserRouter.js';

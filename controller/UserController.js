@@ -1,10 +1,9 @@
-// controller/UserController.js
 import UserModel from '../models/UserModel.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { TOKEN_KEY } from '../config/config.js';
+import { enviarMailVerificacion, enviarMailRestablecimiento } from '../services/mailService.js'; // Importar el servicio de correo
 
-// Ejemplo de funciones
 export const getUsers = async (req, res) => {
   try {
     const users = await UserModel.findAll();
@@ -32,6 +31,13 @@ export const createUsers = async (req, res) => {
     // Encriptar la contraseña antes de guardar el usuario
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const user = await UserModel.create({ ...req.body, password: hashedPassword });
+
+    // Generar token para verificación
+    const token = jwt.sign({ id: user.id, email: user.email }, TOKEN_KEY, { expiresIn: '1h' });
+
+    // Enviar correo de verificación
+    await enviarMailVerificacion(user.email, token);
+
     res.status(201).json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -82,13 +88,17 @@ export const login = async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
+    if (!user.verified) {
+      return res.status(403).json({ error: 'Correo electrónico no verificado' });
+    }
+
     const token = jwt.sign({ id: user.id, email: user.email }, TOKEN_KEY, {
       expiresIn: '2h',
     });
 
     res.json({ token });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -98,4 +108,44 @@ export const updateUsersEmail = async (req, res) => {
 
 export const updateUsersPassword = async (req, res) => {
   // Implementa la lógica de actualización de la contraseña del usuario
+};
+
+export const requestPasswordReset = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await UserModel.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email }, TOKEN_KEY, { expiresIn: '1h' });
+
+    await enviarMailRestablecimiento(user.email, token);
+
+    res.json({ message: 'Correo de restablecimiento de contraseña enviado' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, TOKEN_KEY);
+    const user = await UserModel.findByPk(decoded.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await user.update({ password: hashedPassword });
+
+    res.json({ message: 'Contraseña actualizada correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: 'Token inválido o expirado' });
+  }
 };

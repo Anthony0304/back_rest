@@ -10,6 +10,6 @@ export const sequelize = new Sequelize(
     host: DB_HOST,
     port: DB_PORT,
     dialect: DB_CONNECTION,
-    logging: false, // Opcional: desactiva el registro de consultas SQL en la consola
+    logging: false,
   }
 );
